@@ -1,0 +1,49 @@
+name: MLOps Housing Regression CI/CD
+
+on:
+  push:
+    branches: [ main, reg-branch, hyper-branch ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run regression analysis
+      run: |
+        python regression.py
+    
+    - name: Generate performance report
+      run: |
+        python -c "
+        from regression import compare_models
+        import pandas as pd
+        
+        print('=== MLOps Housing Regression Performance Report ===')
+        print()
+        
+        # Run analysis
+        results = compare_models()
+        
+        print('Performance Summary:')
+        print(results.to_string(index=False))
+        
+        # Find best model
+        best_model = results.loc[results['R2'].idxmax()]
+        print(f'\\nBest Model: {best_model[\"Model\"]} (R² = {best_model[\"R2\"]:.4f})')
+        "
